@@ -84,7 +84,7 @@ class Knn:
     def predict(self, data):
         batch = []
         previous_item = None
-        for i, session in data.iterrows():
+        for i, session in tqdm(data.iterrows()):
             if previous_item == session["SessionId"]:
                 continue
             rec = self.eval(data.loc[data["SessionId"] == session["SessionId"]])
@@ -98,8 +98,14 @@ class Knn:
         return np.array(batch)
 
     def score(self, data, real_data):
-        #we assume we have one real value
+        # we assume we have one real value
         data_pred = self.predict(data)
+        well_predicted = 0
+        all_predictions = 0
         for real, pred in zip(real_data, data_pred):
-            real_found_in_pred = np.isin(pred, real, assume_unique=True)
-            print(real_found_in_pred)
+            real_found_in_pred = np.isin(real, pred, assume_unique=True)
+            all_predictions += 1
+            if real_found_in_pred:
+                well_predicted += 1
+
+        return well_predicted / all_predictions
