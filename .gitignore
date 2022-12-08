@@ -2,3 +2,5 @@
 /src/data/__pycache__/DataManipulation.cpython-39.pyc
 /src/model/__pycache__/__init__.cpython-39.pyc
 /src/model/__pycache__/knn.cpython-39.pyc
+
+*.txt

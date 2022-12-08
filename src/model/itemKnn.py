@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
 
-class itemKnn:
+class ItemKnn:
     def __init__(self, k, max_item_id):
         self._k = k
         self._max_item_id = max_item_id
@@ -71,7 +71,7 @@ if __name__=='__main__':
 
     max_item = np.max(pd.unique(data_vis["ItemId"]))
     print(max_item)
-    my_knn = itemKnn(5, max_item + 1)
+    my_knn = ItemKnn(5, max_item + 1)
     my_knn.fit(data_vis)
     Y = my_knn.predict(data_vis[50000:50100])
     print(Y)

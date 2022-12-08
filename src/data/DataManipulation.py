@@ -7,8 +7,8 @@ import pandas as pd
 
 TRAIN_RATIO = 0.5
 
-TRAIN_PATH = Path("baselines/session_rec_sigir_data/train/browsing_train_sample.csv")
-TEST_PATH = Path("baselines/session_rec_sigir_data/test/rec_test_sample.json")
+TRAIN_PATH = Path("./src/data/browsing_train.csv")
+#TEST_PATH = Path("baselines/session_rec_sigir_data/test/rec_test_sample.json")
 SessionId = "SessionId"
 ItemId = "ItemId"
 Time = "Time"
@@ -94,7 +94,16 @@ class DataManipulation:
     def prepare_data_for_test(self, datas):
         previous_item = None
         real_value = []
+        # delete all single item_event
+        unique_session=pd.unique(datas["SessionId"])
+        for unique in unique_session:
+            d = datas[datas["SessionId"] == unique]
+            if (d.shape[0]==1):
+                datas = datas.drop(d.index)
+            
+
         for i, data in datas.iterrows():
+            
             if (previous_item is not None) and (
                 previous_item["SessionId"] != data["SessionId"]
             ):
