@@ -16,15 +16,18 @@ class ItemKnn:
     
     def fit(self,data):
         unique_ids = pd.unique(data["SessionId"])
+        self.map=dict()
+        for idx, ids in enumerate(unique_ids):
+            self.map[ids]=idx
         self._session_item = np.zeros((len(unique_ids), self._max_item_id))
         self._item_session = dict()
         for session_id in tqdm(unique_ids, disable=False):
-
+            idx=self.map[session_id]
             items_by_session = (data.loc[data["SessionId"] == session_id])[
                 "ItemId"
             ].to_numpy(copy=True)
             items_by_session = np.reshape(items_by_session, (1, -1))
-            self._session_item[session_id][items_by_session] = 1
+            self._session_item[idx][items_by_session] = 1
 
             for prod in list(items_by_session[0]):
                 if prod in self._item_session:
@@ -52,15 +55,11 @@ class ItemKnn:
     def score(self, data, target):
         n_good_predictions=0
         y_hat = self.predict(data)
-        for y in target:
-            if y in y_hat:
+        for idx, y in enumerate(target):
+            if y in y_hat[idx]:
                 n_good_predictions+=1
         score=n_good_predictions/len(target)
         return score
-
-def get_target_test(self, data):
-    return None
-
 
 if __name__=='__main__':
     data_vis = pd.read_csv("./session_rec_sigir_data/prepared/sigir_train_full.txt")
