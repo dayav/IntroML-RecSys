@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import pickle
+import numpy as np
 
 import pandas as pd
 
@@ -89,3 +90,18 @@ class DataManipulation:
         final_train_df.to_csv(PREPARED_TRAIN_PATH, sep=",", index=False)
         pickle.dump(item_index_to_label, ITEM_LABEL_ENCODING_MAP_PATH.open(mode="wb"))
         print("Done generating 'prepared' for training")
+
+    def prepare_data_for_test(self, datas):
+        previous_item = None
+        real_value = []
+        for i, data in datas.iterrows():
+            if (previous_item is not None) and (
+                previous_item["SessionId"] != data["SessionId"]
+            ):
+                real_value.append(previous_item["ItemId"])
+                datas = datas.drop(i - 1)
+            previous_item = data
+
+        real_value.append(previous_item["ItemId"])
+        datas = datas.drop(i)
+        return datas, np.array(real_value)

@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
@@ -98,15 +97,9 @@ class Knn:
             batch.append(rec)
         return np.array(batch)
 
-
-data_vis = pd.read_csv("C:/Dev/IntroML/projet/src/data/sigir_train_full.txt")
-data_eval = data_vis.loc[data_vis["SessionId"] == 5050]
-print(data_vis.shape)
-data_vis = data_vis[:100000]
-
-max_item = np.max(pd.unique(data_vis["ItemId"]))
-print(max_item)
-my_knn = Knn(5, max_item + 1, 1)
-my_knn.fit(data_vis)
-Y = my_knn.predict(data_vis[500000:500100])
-print(Y)
+    def score(self, data, real_data):
+        #we assume we have one real value
+        data_pred = self.predict(data)
+        for real, pred in zip(real_data, data_pred):
+            real_found_in_pred = np.isin(pred, real, assume_unique=True)
+            print(real_found_in_pred)
