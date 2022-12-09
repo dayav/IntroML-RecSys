@@ -4,3 +4,4 @@
 /src/model/__pycache__/knn.cpython-39.pyc
 
 *.txt
+*.pyc

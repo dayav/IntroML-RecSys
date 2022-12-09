@@ -39,28 +39,38 @@ print(accuracy)
 #dans le sens ou on prédit des articles.
 
 predictors=[ItemKnn.ItemKnn(5, max_item + 1)]
-training_size=[1000,10000,100000,200000,400000,800000]
+training_size=[10000,200000,500000,1000000]
 accuracy=dict()
+mrr_accuracy=dict()
 k_values=[3,5,10,15,20,30,50,100]
 test_size=10000
 
 for prd in predictors:
     for train_size in training_size:
-        train_set, test_set = train_test_split(data,test_size=test_size,train_size=train_size)
+        #train_set, test_set = train_test_split(data,test_size=test_size,train_size=train_size)
+        accuracy[train_size] = []
+        mrr_accuracy[train_size] = []
+        train_set=data[:train_size]
+        test_set=data[train_size:train_size+test_size]
         max_item = np.max(pd.unique(train_set["ItemId"]))
         prd._max_item_id=max_item+1
         prd.fit(train_set)
         test_set, test_target = data_manip.prepare_data_for_test(test_set)
         for k in k_values:
-            if accuracy[train_size]==None:
-                accuracy[train_size] = []
             prd._k=k
             accuracy[train_size].append(prd.score(test_set, test_target))
+            mrr_accuracy[train_size].append(prd.mrr_score(test_set, test_target))
+
 
 pyplot.figure()
-pyplot.plot(k_values,accuracy[100000])
+for size in training_size:
+    pyplot.plot(k_values,mrr_accuracy[size], label=f't_size={size}')
 pyplot.xlabel('k')
 pyplot.ylabel('Accuracy')
+pyplot.legend()
+pyplot.show()
+test=0
+
 
 
 
