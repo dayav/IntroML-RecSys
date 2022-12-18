@@ -1,14 +1,17 @@
-import json
 from pathlib import Path
 import pickle
 import numpy as np
 
 import pandas as pd
+from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import LeaveOneOut
+from tqdm import tqdm
 
 TRAIN_RATIO = 0.5
 
 TRAIN_PATH = Path("./src/data/browsing_train.csv")
-#TEST_PATH = Path("baselines/session_rec_sigir_data/test/rec_test_sample.json")
+# TEST_PATH = Path("baselines/session_rec_sigir_data/test/rec_test_sample.json")
 SessionId = "SessionId"
 ItemId = "ItemId"
 Time = "Time"
@@ -92,25 +95,55 @@ class DataManipulation:
         print("Done generating 'prepared' for training")
 
     def prepare_data_for_test(self, datas):
-        previous_item = None
-        real_value = []
-        # delete all single item_event
-        unique_session=pd.unique(datas["SessionId"])
-        for unique in unique_session:
-            d = datas[datas["SessionId"] == unique]
-            if (d.shape[0]==1):
-                datas = datas.drop(d.index)
-            
+        session_groups = datas.groupby(["SessionId"])
+        tests_ = (group.iloc[:-1, :] for name, group in tqdm(session_groups))
+        test = pd.concat(tests_)
+        real_value = [group.iloc[-1, :].ItemId for name, group in tqdm(session_groups)]
 
-        for i, data in datas.iterrows():
-            
-            if (previous_item is not None) and (
-                previous_item["SessionId"] != data["SessionId"]
-            ):
-                real_value.append(previous_item["ItemId"])
-                datas = datas.drop(i - 1)
-            previous_item = data
+        return test, np.array(real_value)
 
-        real_value.append(previous_item["ItemId"])
-        datas = datas.drop(i)
-        return datas, np.array(real_value)
+    def train_test_split(self, datas, train_size, test_size):
+        unique_session = pd.unique(datas["SessionId"])
+        if (train_size is not None) and (train_size > unique_session.shape[0]):
+            real_train_size = None
+        else:
+            real_train_size = train_size
+        print(f"train size was modified real train session size is {real_train_size}")
+        session_id_train, session_id_test = train_test_split(
+            unique_session,
+            test_size=test_size,
+            train_size=real_train_size,
+            shuffle=True,
+        )
+
+        return (
+            datas[datas.SessionId.isin(session_id_train)],
+            datas[datas.SessionId.isin(session_id_test)],
+            real_train_size,
+        )
+
+    def leave_one_out_split(self, datas):
+        unique_session = pd.unique(datas["SessionId"])
+        loo = LeaveOneOut()
+
+        for train_index, valid_index in loo.split(unique_session):
+            yield (
+                datas[datas.SessionId.isin(train_index)],
+                datas[datas.SessionId.isin(valid_index)],
+            )
+
+    def kFold_split(self, datas, n_split=5):
+        unique_session = pd.unique(datas["SessionId"])
+        loo = KFold(n_splits=n_split, shuffle=True)
+
+        for train_index, valid_index in loo.split(unique_session):
+            yield (
+                datas[datas.SessionId.isin(train_index)],
+                datas[datas.SessionId.isin(valid_index)],
+            )
+
+    def Split(self, datas, n_split=5):
+        unique_session = pd.unique(datas["SessionId"])
+        index_split = np.array_split(unique_session, n_split)
+        for train_index in index_split:
+            yield (datas[datas.SessionId.isin(train_index)])
