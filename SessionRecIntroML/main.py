@@ -89,13 +89,13 @@ def construct_session_sequences(df, sessionID, itemID):
 
 
 # sessions = construct_session_sequences(train, "SessionId", "ItemId")
-print(f"full test size : {tests.shape}")
-for train_d in data_manip.Split(tests, 5):
-    print(f"train_d size : {train_d.shape}")
+# print(f"full test size : {tests.shape}")
+# for train_d in data_manip.Split(tests, 5):
+#     print(f"train_d size : {train_d.shape}")
 
-    # test_set, test_target = data_manip.prepare_data_for_test(train_t)
-    # valid_acc += knn.mrr_score(test_set, test_target)
-    # count += 1
+# test_set, test_target = data_manip.prepare_data_for_test(train_t)
+# valid_acc += knn.mrr_score(test_set, test_target)
+# count += 1
 
 predictors = [Knn(5, max_item + 1, 100)]
 training_size = [10000, 200000, 500000, 1000000]
@@ -108,7 +108,7 @@ k_values = [3, 5, 10, 15, 20, 30, 50, 100]
 data_train_fine, _, _ = data_manip.train_test_split(train, 80000, None)
 for k in k_values:
 
-    knn = Knn(k, max_item + 1, 10)
+    knn = ItemKnn(k, max_item + 1)
 
     count = 0
     train_acc, valid_acc = 0, 0
@@ -120,7 +120,9 @@ for k in k_values:
         # print(f"eval_t size : {eval_t.shape}")
 
         test_set, test_target = data_manip.prepare_data_for_test(train_t)
-        valid_acc += knn.mrr_score(test_set, test_target)
+        score = knn.mrr_score(test_set, test_target, 3)
+        y_hat = knn.predict(test_set)
+        valid_acc += mean_reciprocal_rank(y_hat, test_target, 5)
         count += 1
 
     # if weight == "uniform":

@@ -17,23 +17,30 @@ class ItemKnn:
 
     def fit(self, data):
         unique_ids = pd.unique(data["SessionId"])
+        session_groups = data.groupby(["SessionId"])
         # self.map=dict()
         # for idx, ids in enumerate(unique_ids):
         #     self.map[ids]=idx
-        self._session_item = lil_matrix(
-            (len(unique_ids), self._max_item_id), dtype=np.ubyte
+        self._item_session = lil_matrix(
+            (self._max_item_id, len(unique_ids)), dtype=np.ubyte
         )
-        session_groups = data.groupby(["SessionId"])
+        item_groups = data.groupby(["ItemId"])
         self._session_ids = np.zeros(unique_ids.shape)
         relative_session_ids = 0
         for name, group in tqdm(session_groups):
             values = group["ItemId"].values
-            self._session_item[relative_session_ids, values] = 1
-            self._session_ids[relative_session_ids] = name
+            self._item_session[values, relative_session_ids] = 1
             relative_session_ids += 1
 
-        self._session_item = csr_matrix(self._session_item)
-        self._sim_matrix = cosine_similarity(self._session_item)
+        # for name, group in tqdm(item_groups):
+        #     values = np.array(
+        #         [np.where(unique_ids == val) for val in group["SessionId"].values]
+        #     ).flatten()
+        #     self._item_session[name, values] = 1
+        #     relative_session_ids += 1
+
+        self._item_session = csr_matrix(self._item_session)
+        self._sim_matrix = cosine_similarity(self._item_session)
 
     def predict(self, data):
         """
@@ -78,14 +85,14 @@ class ItemKnn:
         score = n_good_predictions / len(target)
         return score
 
-    def mrr_score(self, data, target):
+    def mrr_score(self, data, target, k):
         """
         Compute the mean reciprocal error of predictions over target.
         """
         mrr_sum = 0
         y_hat = self.predict(data)
         for idx, y in enumerate(target):
-            for i in range(1, self._k + 1):
+            for i in range(1, k + 1):
                 if y == y_hat[idx][-i]:
                     mrr_sum += 1 / i
         mrr_score = mrr_sum / len(target)
