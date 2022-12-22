@@ -1,5 +1,5 @@
 # SessionRecIntroML
-GIF-7005 project
+GIF-7005 project : tâche de recommandation pour commerce électronique.
 
 ## Installation of the Environment
 
